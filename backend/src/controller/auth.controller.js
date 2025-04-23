@@ -4,6 +4,7 @@ import { UserRole } from "../generated/prisma/index.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
+import axios from "axios";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -429,3 +430,51 @@ export const resetPassword = async (req, res) => {
         });
     }
 }
+
+export const googleAuth = async (req, res) => {
+    console.log("Received query params:", req.query);
+    const { code } = req.query; // Expecting 'code', NOT 'id_token'
+    console.log("Authorization code:", code);
+    if (!code) {
+      return res.status(400).json({
+        success: false,
+        message: "Authorization code is missing.",
+      });
+    }
+  
+    try {
+      // Exchange code for tokens
+      const { data } = await axios.post("https://oauth2.googleapis.com/token", null, {
+        params: {
+          code,
+          client_id: process.env.GOOGLE_CLIENT_ID,
+          client_secret: process.env.GOOGLE_CLIENT_SECRET,
+          redirect_uri: process.env.REDIRECT_URI,
+          grant_type: "authorization_code",
+        },
+      });
+  
+      const { id_token, access_token } = data;
+  
+      // Get user info using access token
+      const userInfo = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      });
+  
+      res.status(200).json({
+        success: true,
+        message: "User logged in successfully",
+        user: userInfo.data,
+        id_token, // Optional: return for frontend validation
+      });
+      res.redirect("/")
+    } catch (error) {
+      console.error("OAuth error:", error.response?.data || error.message);
+      res.status(500).json({
+        message: "Error logging in user",
+        error: error.message,
+      });
+    }
+  };
