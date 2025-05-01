@@ -25,7 +25,7 @@ export const submitBatch = async (submissions) => {
     }
   );
 
-  console.log(data);
+  // console.log(data);
   return data;
 };
 
@@ -49,6 +49,7 @@ export const pollBatchResults = async (tokens) => {
         })
 
         const results = data.submissions;
+        console.log("Results", results)
 
         const isAlldone = results.every((result) => {
             return result.status.id!==1 && result.status.id!==2
