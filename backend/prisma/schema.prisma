@@ -41,7 +41,7 @@ model User {
   updatedAt                DateTime        @updatedAt
   problems                 Problem[]
   submissions              Submission[]
-  problemSolved            ProblemSolved[]
+  solvedProblem            ProblemSolved[]
 }
 
 model Problem {
