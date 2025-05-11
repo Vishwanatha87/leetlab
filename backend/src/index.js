@@ -7,6 +7,7 @@ import problemRoute from "./routes/problem.routes.js";
 import authRoute from "./routes/auth.routes.js";
 import { exec } from "child_process";
 import executeCodeRoute from "./routes/execute-code.routes.js";
+import submissionRoute from "./routes/submission.routes.js";
 
 dotenv.config();
 const app = express();
@@ -25,6 +26,7 @@ app.get("/", (req, res) => {
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/problem", problemRoute);
 app.use("/api/v1/execute-code", executeCodeRoute);
+app.use("/api/v1/submission",submissionRoute);
 
 app.listen(process.env.PORT, () => {
   console.log(`Server is running on port ${process.env.PORT}`);
