@@ -60,7 +60,6 @@ export const getSubmissionCountForProblem = async (req, res) => {
 
     const submissionCount = await db.Submission.count({
       where: {
-        userId: userID,
         problemId: problemId,
       },
     });

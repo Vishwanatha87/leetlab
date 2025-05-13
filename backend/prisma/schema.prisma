@@ -109,7 +109,6 @@ model TestCaseResult {
 
   // relations
   submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-
   @@index([submissionId])
 }
 
