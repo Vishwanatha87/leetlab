@@ -10,11 +10,13 @@ const LoginSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
   password: z
     .string()
-    .min(8, { message: "Password must be at least 8 characters" })
+    .min(8, { message: "Password must be at least 8 characters" }),
 });
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
+
+  const { login, isLoggingIn } = useAuthStore();
 
   const {
     register,
@@ -25,8 +27,13 @@ const LoginPage = () => {
   });
 
   const onSubmit = async (data) => {
-    console.log("Form submitted", data);
+    try {
+      await login(data);
+    } catch (error) {
+      console.error("Signup failed", error);
+    }
   };
+
   return (
     <div className="h-screen grid lg:grid-cols-2">
       <div className="flex flex-col justify-center items-center p-6 sm:p-12">
@@ -44,7 +51,6 @@ const LoginPage = () => {
 
           {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-
             {/* Email */}
             <div className="form-control">
               <label className="label">
@@ -110,9 +116,16 @@ const LoginPage = () => {
             <button
               type="submit"
               className="btn btn-primary w-full"
-              //  disabled={isSigninUp}
+              disabled={isSigninUp}
             >
-              Login
+              {isLoggingIn ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                "Sign in"
+              )}
             </button>
           </form>
 
