@@ -36,7 +36,7 @@ const ProblemTable = ({ problems }) => {
       );
   }, [problems, search, difficulty, selectedTag]);
 
-  const itemsPerPage = 1;
+  const itemsPerPage = 7;
   const totalPages = Math.ceil(filteredProblems.length / itemsPerPage);
   const paginatedProblems = useMemo(() => {
     return filteredProblems.slice(
