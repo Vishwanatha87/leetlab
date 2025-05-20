@@ -68,30 +68,29 @@ export const createProblem = async (req, res) => {
       }
     }
 
-      // create the problem in the database
+    // create the problem in the database
 
-      const newProblem = await db.problem.create({
-        data: {
-          title,
-          description,
-          difficulty,
-          tags,
-          examples,
-          constraints,
-          testcases,
-          codeSnippets,
-          referenceSolutions,
-          userId: req.user.id,
-        },
-      });
+    const newProblem = await db.problem.create({
+      data: {
+        title,
+        description,
+        difficulty,
+        tags,
+        examples,
+        constraints,
+        testcases,
+        codeSnippets,
+        referenceSolutions,
+        userId: req.user.id,
+      },
+    });
 
-      return res.status(201).json({
-        sucess: true,
-        message: "Problem created successfully",
-        problem: newProblem,
-      });
-    }
-   catch (error) {
+    return res.status(201).json({
+      sucess: true,
+      message: "Problem created successfully",
+      problem: newProblem,
+    });
+  } catch (error) {
     console.log(error);
     return res.status(500).json({
       message: "Problem not created",
@@ -102,7 +101,15 @@ export const createProblem = async (req, res) => {
 
 export const getAllProblems = async (req, res) => {
   try {
-    const problems = await db.problem.findMany();
+    const problems = await db.problem.findMany({
+      include: {
+        problemSolvedBy: {
+          where: {
+            userId: req.user.id,
+          },
+        },
+      },
+    });
 
     if (!problems) {
       res.status(404).json({
@@ -172,7 +179,6 @@ export const updateProblemById = async (req, res) => {
   } = req.body;
 
   try {
-
     if (req.user.role !== "ADMIN") {
       return res.status(403).json({
         message: "You are not authorized to create a problem",
@@ -181,10 +187,10 @@ export const updateProblemById = async (req, res) => {
     }
 
     const problem = await db.problem.findUnique({
-      where:{
+      where: {
         id,
-      }
-    })
+      },
+    });
 
     if (!problem) {
       return res.status(404).json({
@@ -193,7 +199,6 @@ export const updateProblemById = async (req, res) => {
         error: "Problem not found",
       });
     }
-
 
     for (const [language, solutonCode] of Object.entries(referenceSolutions)) {
       //object.entries() is used to loop through the object and get the key and value in a array
@@ -248,14 +253,13 @@ export const updateProblemById = async (req, res) => {
         codeSnippets,
         referenceSolutions,
       },
-    })
+    });
 
     return res.status(200).json({
       sucess: true,
       message: "Problem updates successfully",
       problem: updatedProblem,
     });
-
   } catch (error) {
     console.log(error);
     return res.status(500).json({
@@ -301,24 +305,23 @@ export const deleteProblem = async (req, res) => {
 };
 
 export const getAllSolvedProblemsByUser = async (req, res) => {
-
   try {
     const problems = await db.problem.findMany({
-      where:{
-        problemSolvedBy:{
-          some:{
-            userId:req.user.id,
-          }
-        }
+      where: {
+        problemSolvedBy: {
+          some: {
+            userId: req.user.id,
+          },
+        },
       },
-      include:{
-        problemSolvedBy:{
-          where:{
-            userId:req.user.id,
-          }
-        }
-      }
-    })
+      include: {
+        problemSolvedBy: {
+          where: {
+            userId: req.user.id,
+          },
+        },
+      },
+    });
 
     res.status(200).json({
       success: true,
@@ -326,7 +329,7 @@ export const getAllSolvedProblemsByUser = async (req, res) => {
       problems,
     });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res.status(500).json({
       success: false,
       message: "error fetching problems",
