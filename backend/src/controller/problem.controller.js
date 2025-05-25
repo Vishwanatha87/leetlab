@@ -47,7 +47,7 @@ export const createProblem = async (req, res) => {
         stdin: input,
         expected_output: output,
       }));
-      console.log("Submissions", submissions);
+      // console.log("Submissions", submissions);
 
       const submissionResults = await submitBatch(submissions);
 
