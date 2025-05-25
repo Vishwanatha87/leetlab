@@ -20,7 +20,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://leetlab-uv7g.onrender.com/"],
+    origin: ["http://localhost:5173", "https://leetlab-uv7g.onrender.com"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
   })
