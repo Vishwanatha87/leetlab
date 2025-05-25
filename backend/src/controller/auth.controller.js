@@ -90,7 +90,7 @@ export const register = async (req, res) => {
     res.cookie("jwt", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV !== "development",
-      sameSite: "strict",
+      sameSite: "None",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
@@ -194,7 +194,7 @@ export const login = async (req, res) => {
     res.cookie("jwt", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV !== "development",
-      sameSite: "strict",
+      sameSite: "None",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
@@ -257,77 +257,77 @@ export const check = async (req, res) => {
 };
 
 export const getAllUsers = async (req, res) => {
-    try {
-        const users = await db.user.findMany({});
-    
-        res.status(200).json({
-        success: true,
-        message: "Users fetched successfully",
-        users,
-        });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({
-        message: "Error fetching users",
-        error: error.message,
-        });
-    }
-}
+  try {
+    const users = await db.user.findMany({});
+
+    res.status(200).json({
+      success: true,
+      message: "Users fetched successfully",
+      users,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Error fetching users",
+      error: error.message,
+    });
+  }
+};
 
 export const forgotPassword = async (req, res) => {
-    const { email } = req.body;
-    
-    if (!email) {
-        return res.status(400).json({
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({
+      success: false,
+      message: "Please provide an email",
+    });
+  }
+
+  try {
+    const user = await db.user.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    if (!user) {
+      return res.status(400).json({
         success: false,
-        message: "Please provide an email",
-        });
+        message: "User not found",
+      });
     }
-    
-    try {
-        const user = await db.user.findUnique({
-        where: {
-            email,
-        },
-        });
-    
-        if (!user) {
-        return res.status(400).json({
-            success: false,
-            message: "User not found",
-        });
-        }
-    
-        const resetToken = crypto.randomBytes(32).toString("hex");
-    
-        await db.user.update({
-        where: {
-            id: user.id,
-        },
-        data: {
-            resetPasswordToken:resetToken,
-            resetPasswordTokenExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000), // 1 day
-        },
-        });
-    
-        const transporter = nodemailer.createTransport({
-        host: process.env.MAILTRAP_HOST,
-        port: process.env.MAILTRAP_PORT,
-        secure: false,
-        auth: {
-            user: process.env.MAILTRAP_USER,
-            pass: process.env.MAILTRAP_PASSWORD,
-        },
-        });
-    
-        const mailOptions = {
-        from: process.env.MAILTRAP_SENDER_EMAIL,
-        to: user.email,
-        subject: "Reset your password",
-        text: `Please click on the below url to reset your password:
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    await db.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        resetPasswordToken: resetToken,
+        resetPasswordTokenExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000), // 1 day
+      },
+    });
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.MAILTRAP_HOST,
+      port: process.env.MAILTRAP_PORT,
+      secure: false,
+      auth: {
+        user: process.env.MAILTRAP_USER,
+        pass: process.env.MAILTRAP_PASSWORD,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.MAILTRAP_SENDER_EMAIL,
+      to: user.email,
+      subject: "Reset your password",
+      text: `Please click on the below url to reset your password:
                 ${process.env.BASE_URL}/api/v1/auth/resetpassword/${resetToken}/${user.id}
                 `,
-                html:`
+      html: `
                 <div style="font-family: Arial, sans-serif; padding: 20px;">
                     <h2>Reset Your Password</h2>
                     <p>Please click the button below to reset your password:</p>
@@ -338,113 +338,114 @@ export const forgotPassword = async (req, res) => {
                     </a>
                     <p>If you didn’t request this, you can safely ignore this email.</p>
                 </div>
-                `
-    
-        };
-    
-        await transporter.sendMail(mailOptions);
-    
-        res.status(200).json({
-            success: true,
-            message: "Reset password link sent to email",
-            user:{
-                id:user.id,
-                name:user.name,
-                email:user.email,
-                role:user.role,
-                image:user.image
-            }
-        })
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({
-            message: "Error sending reset password link",
-            error: error.message,
-        });
-    }
+                `,
+    };
 
-}
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).json({
+      success: true,
+      message: "Reset password link sent to email",
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        image: user.image,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Error sending reset password link",
+      error: error.message,
+    });
+  }
+};
 
 export const resetPassword = async (req, res) => {
-    const { token, userId } = req.params;
-    const { password } = req.body;
-    
-    if (!token || !password || !userId) {
-        return res.status(400).json({
-        success: false,
-        message: "Please provide all the required fields",
-        });
-    }
-    
-    try {
-        const user = await db.user.findUnique({
-        where: {
-            id: userId,
-            resetPasswordToken: token,
-        },
-        });
-    
-        if (!user) {
-        return res.status(400).json({
-            success: false,
-            message: "Invalid token",
-        });
-        }
-    
-        if (user.resetPasswordTokenExpiry < new Date()) {
-        return res.status(400).json({
-            success: false,
-            message: "Token expired",
-        });
-        }
-    
-        const hashedPassword = await bcrypt.hash(password, 10);
-    
-        await db.user.update({
-        where: {
-            id: user.id,
-        },
-        data: {
-            password: hashedPassword,
-            resetPasswordToken: null,
-            resetPasswordTokenExpiry: null,
-        },
-        });
-    
-        res.status(200).json({
-            success: true,
-            message: "Password reset successfully",
-            user:{
-                id:user.id,
-                name:user.name,
-                email:user.email,
-                role:user.role,
-                image:user.image
-            }
-        })
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({
-            message: "Error resetting password",
-            error: error.message,
-        });
-    }
-}
+  const { token, userId } = req.params;
+  const { password } = req.body;
 
-export const googleAuth = async (req, res) => {
-    console.log("Received query params:", req.query);
-    const { code } = req.query; // Expecting 'code', NOT 'id_token'
-    console.log("Authorization code:", code);
-    if (!code) {
+  if (!token || !password || !userId) {
+    return res.status(400).json({
+      success: false,
+      message: "Please provide all the required fields",
+    });
+  }
+
+  try {
+    const user = await db.user.findUnique({
+      where: {
+        id: userId,
+        resetPasswordToken: token,
+      },
+    });
+
+    if (!user) {
       return res.status(400).json({
         success: false,
-        message: "Authorization code is missing.",
+        message: "Invalid token",
       });
     }
-  
-    try {
-      // Exchange code for tokens
-      const { data } = await axios.post("https://oauth2.googleapis.com/token", null, {
+
+    if (user.resetPasswordTokenExpiry < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: "Token expired",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await db.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        password: hashedPassword,
+        resetPasswordToken: null,
+        resetPasswordTokenExpiry: null,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Password reset successfully",
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        image: user.image,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Error resetting password",
+      error: error.message,
+    });
+  }
+};
+
+export const googleAuth = async (req, res) => {
+  console.log("Received query params:", req.query);
+  const { code } = req.query; // Expecting 'code', NOT 'id_token'
+  console.log("Authorization code:", code);
+  if (!code) {
+    return res.status(400).json({
+      success: false,
+      message: "Authorization code is missing.",
+    });
+  }
+
+  try {
+    // Exchange code for tokens
+    const { data } = await axios.post(
+      "https://oauth2.googleapis.com/token",
+      null,
+      {
         params: {
           code,
           client_id: process.env.GOOGLE_CLIENT_ID,
@@ -452,29 +453,33 @@ export const googleAuth = async (req, res) => {
           redirect_uri: process.env.REDIRECT_URI,
           grant_type: "authorization_code",
         },
-      });
-  
-      const { id_token, access_token } = data;
-  
-      // Get user info using access token
-      const userInfo = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
+      }
+    );
+
+    const { id_token, access_token } = data;
+
+    // Get user info using access token
+    const userInfo = await axios.get(
+      "https://www.googleapis.com/oauth2/v3/userinfo",
+      {
         headers: {
           Authorization: `Bearer ${access_token}`,
         },
-      });
-  
-      res.status(200).json({
-        success: true,
-        message: "User logged in successfully",
-        user: userInfo.data,
-        id_token, // Optional: return for frontend validation
-      });
-      res.redirect("/")
-    } catch (error) {
-      console.error("OAuth error:", error.response?.data || error.message);
-      res.status(500).json({
-        message: "Error logging in user",
-        error: error.message,
-      });
-    }
-  };
+      }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "User logged in successfully",
+      user: userInfo.data,
+      id_token, // Optional: return for frontend validation
+    });
+    res.redirect("/");
+  } catch (error) {
+    console.error("OAuth error:", error.response?.data || error.message);
+    res.status(500).json({
+      message: "Error logging in user",
+      error: error.message,
+    });
+  }
+};
