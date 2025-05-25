@@ -31,7 +31,7 @@ const ProblemPage = () => {
 
   const [code, setCode] = useState("");
   const [activeTab, setActiveTab] = useState("description");
-  const [selectedLanguage, setSelectedLanguage] = useState("javascript");
+  const [selectedLanguage, setSelectedLanguage] = useState("JAVASCRIPT");
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [testCases, setTestCases] = useState([]);
 
@@ -42,10 +42,16 @@ const ProblemPage = () => {
     console.log(problem);
   }, [id]);
 
+  useEffect(() => {
+    if (problem && problem.codeSnippets) {
+      setCode(problem.codeSnippets[selectedLanguage.toUpperCase()] || "");
+    }
+  }, [problem, selectedLanguage]);
+
   const handleLanguageChange = (e) => {
     const lang = e.target.value;
     setSelectedLanguage(lang);
-    setCode(problem.codeSnippets[lang.toUpperCase()] || "");
+    // setCode(problem.codeSnippets[lang.toUpperCase()] || "");
   };
   const renderTabContent = () => {
     switch (activeTab) {
