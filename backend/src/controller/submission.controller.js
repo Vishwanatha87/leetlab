@@ -1,3 +1,4 @@
+import {db} from "../libs/db.js";
 export const getAllSubmissions = async (req, res) => {
   try {
     const userID = req.user.id;
